@@ -2,6 +2,29 @@
 <LightningComponentBundle xmlns="http://soap.sforce.com/2006/04/metadata">
     <apiVersion>49.0</apiVersion>
     <description>File Manager</description>
-    <isExposed>false</isExposed>
+    <isExposed>true</isExposed>
     <masterLabel>File Manager</masterLabel>
+    <targets>
+        <target>lightning__RecordPage</target>
+        <target>lightningCommunity__Page</target>
+        <target>lightningCommunity__Default</target>
+    </targets>
+    <targetConfigs>
+        <targetConfig targets="lightningCommunity__Default">
+            <property name="title" type="String" label="Title" default="Files" required="true"/>
+            <property name="recordId" type="String" label="Record Id" default="{!recordId}"/>
+            <property name="showUpload" type="Boolean" label="User can upload Files" default="true"/>
+            <property name="isCommunity" type="Boolean" label="Is Component used in Community" default="true"/>
+            <property name="showFilters" type="Boolean" label="User can Filter Files" default="false"/>
+            <property name="filterByOwner" type="Boolean" label="User can view own Files only.(Except user with view all permission)" default="false"/>
+        </targetConfig>
+        <targetConfig targets="lightning__RecordPage">
+            <property name="title" type="String" label="Title" default="Files" required="true"/>
+            <property name="showUpload" type="Boolean" label="User can upload Files" default="true"/>
+            <property name="isCommunity" type="Boolean" label="Is Component used in Community" default="false"/>
+            <property name="showFilters" type="Boolean" label="User can Filter Files" default="false"/>
+            <property name="filterByOwner" type="Boolean" label="User can view own Files only.(Except user with view all permission)" default="false"/>
+        </targetConfig>
+
+    </targetConfigs>
 </LightningComponentBundle>

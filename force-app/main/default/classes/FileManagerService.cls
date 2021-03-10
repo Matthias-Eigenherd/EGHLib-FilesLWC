@@ -12,16 +12,24 @@ public with sharing class FileManagerService {
 
     @AuraEnabled(Cacheable=true)
     public static String getContentVersions(String recordId, Boolean filterByCustomPermission) {
+        System.debug('_____________________________________');
+        System.debug('_____________________recordId________________' + recordId);
+        System.debug('________________filterByCustomPermission_____________________' + filterByCustomPermission);
         List<ContentDocumentLink> contentDocumentLinks = [
                 SELECT ContentDocumentId, ContentDocument.OwnerId, LinkedEntityId
                 FROM ContentDocumentLink
                 WHERE LinkedEntityId = :recordId
         ];
+        System.debug('__________________checkPermission___________________');
 
         Boolean userHasPermission = FeatureManagement.checkPermission(
                 'FileManagerViewAll'
         );
+        System.debug('______________getUserId_______________________');
+
         Id userId = UserInfo.getUserId();
+
+        System.debug('______________loop_______________________');
 
         Set<Id> allDocumentIds = new Set<Id>();
         for (ContentDocumentLink documentLink : contentDocumentLinks) {

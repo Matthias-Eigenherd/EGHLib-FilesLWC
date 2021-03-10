@@ -2,6 +2,43 @@
  - Created by mkottmann on 10.03.21.
  -->
 
-<!-- File Manager -->
 <template>
+    <lightning-card variant="Narrow" title={title} icon-name="standard:document">
+        <template if:true={isLoading}>
+            <lightning-spinner alternative-text="Loading" size="small" variant="brand">
+            </lightning-spinner>
+        </template>
+
+        <lightning-button title="Sync Files" icon-name="utility:sync" onclick={handleSync} slot="actions">
+        </lightning-button>
+
+        <div class="slds-var-p-around_small">
+            <div class="slds-grid slds-wrap">
+
+                <div class="slds-col slds-size_1-of-4" if:true={showFilters}>
+                    <lightning-input if:true={showFilters} type="search" variant="standard" name="Title" label="Title"
+                                     onchange={handleSearch}>
+                    </lightning-input>
+                </div>
+                <div class="slds-col slds-size_1-of-4" if:true={showFilters}>
+                    <lightning-input if:true={showFilters} type="search" variant="standard" name="Created By"
+                                     label="Created By" onchange={handleSearch}>
+                    </lightning-input>
+                </div>
+
+                <div class="slds-col slds-size_2-of-4" if:true={showUpload}>
+                    <lightning-file-upload if:true={showUpload} label="Upload New File" name="fileUplaod"
+                                           record-id={recordId} onuploadfinished={handleUplaodFinished} multiple>
+                    </lightning-file-upload>
+                </div>
+
+            </div>
+        </div>
+
+        <div class="slds-var-p-around_small">
+            <lightning-datatable key-field="Id" data={dataList} columns={columnsList} onrowaction={handleRowAction}
+                                 hide-checkbox-column></lightning-datatable>
+        </div>
+
+    </lightning-card>
 </template>
