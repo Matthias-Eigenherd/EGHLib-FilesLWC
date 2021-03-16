@@ -1,0 +1,155 @@
+  Skip to content
+    Search or jump to…
+
+    Pull requests
+    Issues
+    Marketplace
+    Explore
+
+    @Matthias-Eigenherd
+    Eigenherd
+    /
+    eghlib-template
+    Private template
+    0
+    00
+    Code
+    Issues
+    Pull requests
+    Actions
+    Projects
+    Wiki
+    Security
+    Insights
+    Settings
+    eghlib-template/.github/workflows/GenerateDocumentation.yml
+    @Matthias-Eigenherd
+    Matthias-Eigenherd workflow added
+    Latest commit 3fcf900 on 24 Nov 2020
+    History
+    1 contributor
+    120 lines (106 sloc)  4.35 KB
+
+  name: Workflow to generate documentation
+
+  # Controls when the action will run. Triggers the workflow on push or pull request
+  # events but only for the master branch
+  on:
+    pull_request:
+      types: [closed]
+
+  # A workflow run is made up of one or more jobs that can run sequentially or in parallel
+  jobs:
+    check:
+      name: Has relevant changes
+      outputs:
+        do_generating: ${{ steps.check_files.outputs.do_generating }}
+      runs-on: ubuntu-latest
+      steps:
+        - name: Checkout code
+          uses: actions/checkout@v2
+          with:
+            fetch-depth: 2
+        - name: check modified files
+          id: check_files
+          run: |
+            # list modified files
+            git diff --name-only HEAD^ HEAD
+            git diff --name-only HEAD^ HEAD > /tmp/files.txt
+            echo "::set-output name=do_generating::false"
+            while IFS= read -r file
+            do
+              echo $file
+              if [[ $file == */classes/* || $file == *README.md ]]; then
+                echo "::set-output name=do_generating::true"
+                break
+              fi
+            done < /tmp/files.txt
+    GeneratingDocu:
+      needs: check
+      if: needs.check.outputs.do_generating == 'true'
+      runs-on: ubuntu-latest
+      # Steps represent a sequence of tasks that will be executed as part of the job
+      steps:
+        - uses: actions/checkout@main
+          with:
+            persist-credentials: false
+            fetch-depth: 0
+
+        - name: Setup SSH Keys and known_hosts
+          env:
+            SSH_AUTH_SOCK: /tmp/ssh_agent.sock
+          run: |
+            mkdir -p ~/.ssh
+            ssh-keyscan github.com >> ~/.ssh/known_hosts
+            ssh-agent -a $SSH_AUTH_SOCK > /dev/null
+            ssh-add - <<< "${{ secrets.EGHLIB_DOCU_PRIVATEKEY }}"
+        - name: Read from sfdx-project.json
+          id: PACKAGE_INFO
+          run: |
+            #sudo apt-get install jq
+            echo Read Packagename from sfdx-project.json
+            echo "::set-output name=packageName::$( cat sfdx-project.json | jq '.packageDirectories[0].package' | xargs)"
+            # Use the Packagename in other steps with ${{steps.PACKAGE_INFO.outputs.packageName}}
+        - name: Generate Docu with /Eigenherd/ApexDoc.git
+          run: |
+            git clone https://github.com/Eigenherd/ApexDoc.git /tmp/ApexDoc/
+            if [ -d "./force-app/main/default/classes" ]
+              then
+                java -jar /tmp/ApexDoc/target/ApexDoc-1.2.0-SNAPSHOT.jar -s './force-app/main/default/classes' -t '/tmp/docs'
+            fi
+        - name: Convert Readme with Pandoc
+          uses: docker://pandoc/core:2.9
+          with:
+            args: -s --from=markdown --to=html --output=${{steps.PACKAGE_INFO.outputs.packageName}}.html README.md
+
+        - name: Clone EGHLib Docu
+          env:
+            SSH_AUTH_SOCK: /tmp/ssh_agent.sock
+          run: git clone git@github.com:Eigenherd/EghLibDocu.git /tmp/EghLibDocu
+
+        - name: Edit and Copy Files
+          run: |
+            # write converted Readme.md to /EghLibDocu/views/packages
+            sed -n '/<body>/I,/<\/body>/I p' ./${{steps.PACKAGE_INFO.outputs.packageName}}.html > /tmp/EghLibDocu/views/packages/${{steps.PACKAGE_INFO.outputs.packageName}}.hbs
+            # Rename and copy Readme.md
+            cp ./README.md /tmp/EghLibDocu/markdowns/packages/${{steps.PACKAGE_INFO.outputs.packageName}}.md
+            if [ -d "/tmp/docs/ApexDocumentation" ]
+              then
+                # Edit and Copy Documentation
+                cd /tmp/docs/ApexDocumentation
+                rm ./index.html
+                for f in *.html; do
+                  sed -i 's/^.*<table width/<table width/' $f
+                  mv -- "$f" "${f%.html}.hbs"
+                done
+                if [ -d "/tmp/EghLibDocu/views/code/${{steps.PACKAGE_INFO.outputs.packageName}}" ]
+                  then
+                    rm -r /tmp/EghLibDocu/views/code/${{steps.PACKAGE_INFO.outputs.packageName}}
+                fi
+                mkdir /tmp/EghLibDocu/views/code/${{steps.PACKAGE_INFO.outputs.packageName}}
+                cp -r ./*.hbs /tmp/EghLibDocu/views/code/${{steps.PACKAGE_INFO.outputs.packageName}}
+            fi
+        - name: Commit and Push EGHLib Docu
+          env:
+            SSH_AUTH_SOCK: /tmp/ssh_agent.sock
+          run: |
+            cd /tmp/EghLibDocu
+            git config --global user.email "accounts@eigenherd.com"
+            git config --global user.name "Gitbot"
+            git add .
+            git status
+            git commit -m ${{github.repository}}' Commit: '${{github.sha}}
+            git push
+    © 2021 GitHub, Inc.
+    Terms
+    Privacy
+    Security
+    Status
+    Docs
+    Contact GitHub
+    Pricing
+    API
+    Training
+    Blog
+    About
