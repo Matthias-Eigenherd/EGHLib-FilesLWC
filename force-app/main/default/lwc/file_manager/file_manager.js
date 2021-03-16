@@ -32,7 +32,7 @@ const columns = [
     },
     {
         label: 'Preview',
-        type: 'button',
+        type: 'button-icon',
         initialWidth: "30",
         typeAttributes: {
             alternativeText: 'Preview',
@@ -42,7 +42,7 @@ const columns = [
     },
     {
         label: 'Download',
-        type: 'button',
+        type: 'button-icon',
         initialWidth: "30",
         typeAttributes: {
             alternativeText: 'Download',
@@ -128,10 +128,6 @@ export default class FileManager extends NavigationMixin(LightningElement) {
             console.log('if(this.isCommunity)');
             this.modalURL = file.fileUrl;
             this.showModal = true;
-            // this[NavigationMixin.Navigate](
-            //     {type:'standard__webPage',
-            //         attributes: {url: file.fileUrl}
-            //     }, false);
         }
     }
 
@@ -215,7 +211,7 @@ export default class FileManager extends NavigationMixin(LightningElement) {
         }
     }
 
-    handleUplaodFinished(){
+    handleUploadFinished(){
         this.handleSync();
     }
 

@@ -31,7 +31,7 @@
                                            label="Upload New File"
                                            name="fileUplaod"
                                            record-id={recordId}
-                                           onuploadfinished={handleUplaodFinished}
+                                           onuploadfinished={handleUploadFinished}
                                            multiple>
                     </lightning-file-upload>
                 </div>
@@ -55,7 +55,8 @@
                     aria-label="modal input "
                     aria-modal="true"
                     aria-describedby="modal-content-id-1"
-                    class="slds-modal slds-fade-in-open"
+                    class="slds-modal slds-fade-in-open slds-modal_medium --sds-c-modal-shadow
+"
             >
                 <div class="slds-modal__container">
                     <header class="slds-modal__header">
@@ -70,7 +71,7 @@
                             class="slds-modal__content slds-p-around_medium"
                             id="modal-content-id-1"
                     >
-                        <iframe width="720" height="480" src={modalURL}>
+                        <iframe width="100%" height="500px" src={modalURL}>
 
                         </iframe>
 

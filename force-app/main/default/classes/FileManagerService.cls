@@ -2,7 +2,12 @@
  *@author       Matthias Kottmann <matthias.kottmann@eigenherd.com>
  *@created      10.03.2021
  *
- *@description  FileManagerService -
+ *@description  FileManagerService - is used by file_manager lwc.
+ *
+ * Search for all Content Versions which Content Documents are linked to a specified Record.
+ *
+ * Content Versions can be filtered.
+ * Users will only see own Files. User with "FileManagerViewAll" Custom Permission will see all Files.
  *
  *
  *
@@ -32,22 +37,22 @@ public with sharing class FileManagerService {
         Id userId = UserInfo.getUserId();
 
 
-        Set<Id> allDocumentIds = new Set<Id>();
+        Set<Id> documentIds = new Set<Id>();
         for (ContentDocumentLink documentLink : contentDocumentLinks) {
             if (filterByCustomPermission && !userHasPermission) {
                 if (documentLink.ContentDocument.OwnerId == userId) {
-                    allDocumentIds.add(documentLink.ContentDocumentId);
+                    documentIds.add(documentLink.ContentDocumentId);
                 } else {
                     continue;
                 }
             } else {
-                allDocumentIds.add(documentLink.ContentDocumentId);
+                documentIds.add(documentLink.ContentDocumentId);
             }
         }
 
         List<ContentVersion> contentVersions = [SELECT Id, FileType, Title,FileExtension, ContentDocumentId,
                 ContentDocument.CreatedBy.Name, ContentDocument.ContentSize, CreatedDate, ContentDocument.FileType
-                FROM ContentVersion WHERE ContentDocumentId IN :allDocumentIds];
+                FROM ContentVersion WHERE ContentDocumentId IN :documentIds];
 
         return JSON.serialize(contentVersions);
     }
