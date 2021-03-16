@@ -27,8 +27,12 @@
                 </div>
 
                 <div class="slds-col slds-size_2-of-4" if:true={showUpload}>
-                    <lightning-file-upload if:true={showUpload} label="Upload New File" name="fileUplaod"
-                                           record-id={recordId} onuploadfinished={handleUplaodFinished} multiple>
+                    <lightning-file-upload if:true={showUpload}
+                                           label="Upload New File"
+                                           name="fileUplaod"
+                                           record-id={recordId}
+                                           onuploadfinished={handleUplaodFinished}
+                                           multiple>
                     </lightning-file-upload>
                 </div>
 
@@ -36,9 +40,54 @@
         </div>
 
         <div class="slds-var-p-around_small">
-            <lightning-datatable key-field="Id" data={dataList} columns={columnsList} onrowaction={handleRowAction}
-                                 hide-checkbox-column></lightning-datatable>
+            <lightning-datatable key-field="id"
+                                 data={dataList}
+                                 columns={columnsList}
+                                 onrowaction={handleRowAction}
+                                 hide-checkbox-column>
+            </lightning-datatable>
         </div>
+
+        <template if:true={showModal}>
+            <section
+                    role="dialog"
+                    tabindex="-1"
+                    aria-label="modal input "
+                    aria-modal="true"
+                    aria-describedby="modal-content-id-1"
+                    class="slds-modal slds-fade-in-open"
+            >
+                <div class="slds-modal__container">
+                    <header class="slds-modal__header">
+                        <h1
+                                id="modal-heading-01"
+                                class="slds-modal__title slds-hyphenate"
+                        >
+                            File Preview
+                        </h1>
+                    </header>
+                    <div
+                            class="slds-modal__content slds-p-around_medium"
+                            id="modal-content-id-1"
+                    >
+                        <iframe width="720" height="480" src={modalURL}>
+
+                        </iframe>
+
+                    </div>
+
+                    <footer class="slds-modal__footer">
+                        <button
+                                class="slds-button slds-button_neutral"
+                                onclick={handleModalClose}
+                        >
+                            Close
+                        </button>
+                    </footer>
+                </div>
+
+            </section>
+        </template>
 
     </lightning-card>
 </template>

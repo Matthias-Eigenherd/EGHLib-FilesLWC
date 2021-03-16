@@ -63,7 +63,7 @@ const columns = [
     }*/
 ];
 
-export default class FileManager extends LightningElement {
+export default class FileManager extends NavigationMixin(LightningElement) {
     @api recordId;
     @api title;
     @api showUpload;
@@ -72,6 +72,8 @@ export default class FileManager extends LightningElement {
     @api filterByOwner;
 
     @track dataList;
+    @track showModal = false;
+    @track modalURL;
     @track columnsList = columns;
     isLoading = false;
 
@@ -88,11 +90,11 @@ export default class FileManager extends LightningElement {
         const actionName = event.detail.action.name;
         const row = event.detail.row;
 
-        console.log('handleRowAction');
+        console.log('handleRowAction: ' + actionName);
 
-        console.log(event);
         switch (actionName){
             case 'Preview':
+                console.log('Showing Details: ' + JSON.stringify(row));
                 this.previewFile(row);
                 break;
             case 'Download':
@@ -106,24 +108,35 @@ export default class FileManager extends LightningElement {
     }
 
     previewFile(file){
-        console.log(file);
+        console.log('previewFile');
+        console.log('previewFile' + file.Title + '.' + file.FileExtension + '  -  ' + file.ContentDocumentId);
         if(!this.isCommunity){
-            this[NavigationMixin.Navigate](
-                {type:'standard__namedPage',
-                    attributes: {pageName: filePreview},
-                    state: {selectedRecordId: file.ContentDocumentId}
+            console.log('if(!this.isCommunity)');
+
+            this[NavigationMixin.Navigate]({
+                    type: 'standard__namedPage',
+                    attributes: {
+                        pageName: 'filePreview'
+                    },
+                    state : {
+                        recordIds: file.ContentDocumentId
+                    }
                 });
+
         }
         else if(this.isCommunity){
-            this[NavigationMixin.Navigate](
-                {type:'standard__webPage',
-                    attributes: {url: file.fileUrl}
-                }, false);
+            console.log('if(this.isCommunity)');
+            this.modalURL = file.fileUrl;
+            this.showModal = true;
+            // this[NavigationMixin.Navigate](
+            //     {type:'standard__webPage',
+            //         attributes: {url: file.fileUrl}
+            //     }, false);
         }
     }
 
     downloadFile(file){
-        console.log(file);
+        console.log('downloadFile');
         this[NavigationMixin.Navigate](
             {type:'standard__webPage',
                 attributes: {url: file.downloadUrl}
@@ -134,7 +147,9 @@ export default class FileManager extends LightningElement {
     handleSync(){
         this.isLoading = true;
 
-        let imageExtensions = ['png', 'jpg', 'gif', 'image'];
+        let imageExtensions = ['png', 'jpg', 'jpeg', 'gif', 'image'];
+        let excelExtensions = ['xls', 'xlsx', 'excel', 'excel_x'];
+        let wordExtensions = ['doc', 'docx', 'word', 'word_x'];
         let supportedIconExtensions = ['ai', 'attachment', 'audio' , 'box_notes', 'csv', 'eps', 'excel', 'exe' , 'flash',
         'folder', 'gdoc', 'gdocs', 'gform', 'gpres', 'gsheet', 'html', 'keynote', 'library_folder', 'link', 'mp4', 'overlay',
         'pack', 'pages', 'pdf', 'ppt', 'psd', 'quip_doc', 'quip_sheet', 'quip_slide', 'rtf', 'slide', 'stypi', 'txt', 'unknown',
@@ -148,27 +163,27 @@ export default class FileManager extends LightningElement {
                 let finalData = JSON.parse(stringifiedData);
                 finalData.forEach(file => {
                     file.downloadUrl = baseUrl + 'sfc/servlet.shepherd/document/download/' + file.ContentDocumentId;
-                    console.log(file.downloadUrl);
                     file.fileUrl = baseUrl + 'sfc/servlet.shepherd/version/renditionDownload?rendition=THUMB720BY480&versionId=' + file.Id;
-                    console.log(file.fileUrl);
                     file.CREATED_BY = file.ContentDocument.CreatedBy.Name;
                     file.Size = this.formatSize(file.ContentDocument.ContentSize, 2);
 
                     let fileType = file.ContentDocument.FileType.toLowerCase();
+                    console.log(fileType);
                     if(imageExtensions.includes(fileType)){
                         file.icon = 'doctype:image';
+                    }else if(excelExtensions.includes(fileType)){
+                        file.icon = 'doctype:excel';
+                    }else if(wordExtensions.includes(fileType)){
+                        file.icon = 'doctype:word';
+                    }else if(supportedIconExtensions.includes(fileType)){
+                        file.icon = 'doctype:' + fileType;
                     }else{
-                        if(supportedIconExtensions.includes(fileType)){
-                            file.icon = 'doctype:' + fileType;
-                        }else{
-                            file.icon = 'doctype:unknown';
-                        }
+                        file.icon = 'doctype:unknown';
                     }
+
 
                 });
                 this.dataList = finalData;
-                console.log('dataList');
-                console.log(this.dataList);
             })
             .catch(error => {
                 console.error('Could not read data. \n',error);
@@ -202,5 +217,9 @@ export default class FileManager extends LightningElement {
 
     handleUplaodFinished(){
         this.handleSync();
+    }
+
+    handleModalClose(event) {
+        this.showModal = false;
     }
 }
