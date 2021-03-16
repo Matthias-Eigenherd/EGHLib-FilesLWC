@@ -10,26 +10,27 @@
 
 public with sharing class FileManagerService {
 
-    @AuraEnabled(Cacheable=true)
+    /**
+     * @param recordId
+     * @param filterByCustomPermission If "True" User with the custom permissen "FileManagerViewAll" will
+     * receive all Content Versions. Without the permission the User receive only  Files he owns.
+     *
+     * @return JSON String which contains a List of Content Versions which are linked to the input Record.
+     */
+    @AuraEnabled(Cacheable=false)
     public static String getContentVersions(String recordId, Boolean filterByCustomPermission) {
-        System.debug('_____________________________________');
-        System.debug('_____________________recordId________________' + recordId);
-        System.debug('________________filterByCustomPermission_____________________' + filterByCustomPermission);
         List<ContentDocumentLink> contentDocumentLinks = [
                 SELECT ContentDocumentId, ContentDocument.OwnerId, LinkedEntityId
                 FROM ContentDocumentLink
                 WHERE LinkedEntityId = :recordId
         ];
-        System.debug('__________________checkPermission___________________');
 
         Boolean userHasPermission = FeatureManagement.checkPermission(
                 'FileManagerViewAll'
         );
-        System.debug('______________getUserId_______________________');
 
         Id userId = UserInfo.getUserId();
 
-        System.debug('______________loop_______________________');
 
         Set<Id> allDocumentIds = new Set<Id>();
         for (ContentDocumentLink documentLink : contentDocumentLinks) {
@@ -44,7 +45,7 @@ public with sharing class FileManagerService {
             }
         }
 
-        List<ContentVersion> contentVersions = [SELECT Id, VersionData, FileType, Title,FileExtension, ContentDocumentId,
+        List<ContentVersion> contentVersions = [SELECT Id, FileType, Title,FileExtension, ContentDocumentId,
                 ContentDocument.CreatedBy.Name, ContentDocument.ContentSize, CreatedDate, ContentDocument.FileType
                 FROM ContentVersion WHERE ContentDocumentId IN :allDocumentIds];
 
